@@ -1,9 +1,9 @@
 # !/bin/bash -
 #
-# Simuliere das Durchscheinen von einzelnen Seiten
+# simulates printed stuff shining though the paper
+# to check for register accuracy
 #
 
-# Hilfsfunktionen
 error()
 {
     echo "$@" 1>&2
@@ -44,7 +44,7 @@ version()
     echo "$PROGRAM version $VERSION"
 }
 
-# Teste, ob die notwendigen Programme installiert sind
+# are pdftk and convert available?
 command -v pdftk >/dev/null 2>&1 || {
     error "pdftk not installed. Aborting."
 }
@@ -52,7 +52,7 @@ command -v convert >/dev/null 2>&1 || {
     error "ImageMagick not installed. Aborting."
 }
 
-# setze Parameter
+# set defaults
 PROGRAM=`basename $0`
 VERSION=1.0
 RES=150
@@ -118,13 +118,13 @@ if [ -z "$DEST" ]; then
     DEST=${SOURCE/.pdf/_shinethrough.pdf}
 fi
 
-# zerlege Dokument in Einzelseiten
+# split document into single pages
 pdftk $SOURCE burst output $TMPDIR/page_%04d.pdf
 
-# bestimme Anzahl der Seiten des Dokumentes
+# count number of pages
 pagenum=$( ls $TMPDIR/page_*.pdf | wc -l )
 
-# Seiten spiegeln/blur/aufhellen; mehrere Prozesse parallel starten
+# start a separate process for each page
 for f in $TMPDIR/page_*.pdf; do
     convert -density ${RES} $f \
         -blur 0x${DIF} \
@@ -134,19 +134,18 @@ for f in $TMPDIR/page_*.pdf; do
         ${f/page_/blur_} &
 done
 
-# warte, bis alle Prozesse beendet sind
 wait
 
-# bearbeite alle Seiten
+# add background to each page
 for n in $(seq 1 $pagenum); do
-    # n % 2 ist 1 für ungerades und 0 für gerades n
-    # bei ungeraden Seiten soll die Folgeseite n + 1 im Hintergrund angezeigt werden,
-    # bei geraden Seiten die vorhergehende Seite, also n - 1
-    # ( n % 2 ) * 2 - 1 liefert +1/-1, wir addieren n
+    # n % 2 is 1 for n odd and 0 for n even
+    # odd pages -> use next page as background (n+1)
+    # even pages -> use previous page (n-1)
+    # ( n % 2 ) * 2 - 1 yields +1/-1, we add n
     b=$(( ($n % 2) * 2 - 1 + $n ))
     printf -v page -- 'page_%04d.pdf' "$n"
     printf -v blur -- 'blur_%04d.pdf' "$b"
-    # Blur als Hintergrund einfügen
+    # check whether backgrund is available, otherwise just copy
     if [ -e "$TMPDIR/$blur" ]; then
         pdftk $TMPDIR/$page background $TMPDIR/$blur output $TMPDIR/${page/page_/out_}
     else
@@ -154,8 +153,8 @@ for n in $(seq 1 $pagenum); do
     fi
 done
 
-# füge die Seiten wieder zusammen
+# concat all pages
 pdftk $TMPDIR/out_*.pdf cat output $DEST
 
-# räume auf
+# cleanup
 rm -rf $TMPDIR
