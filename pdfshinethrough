@@ -1,6 +1,6 @@
 # !/bin/bash -
 #
-# simulates printed stuff shining though the paper
+# simulates printed stuff shining through the paper
 # to check for register accuracy
 #
 
@@ -16,7 +16,7 @@ usage()
 
 $PROGRAM – Version ${VERSION} 2019 Marc Hohl (marc@hohlart.de)
 
-Simulates printed stuff shining though the paper to check for register
+Simulates printed stuff shining through the paper to check for register
 accuracy.
 
 Predefined constants modifying the appearance of the content from the backside
@@ -158,3 +158,4 @@ pdftk $TMPDIR/out_*.pdf cat output $DEST
 
 # cleanup
 rm -rf $TMPDIR
+

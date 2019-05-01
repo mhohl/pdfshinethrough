@@ -1,11 +1,12 @@
 # pdfshinethrough
 
-simulates printed stuff shining though the paper to check for register
+simulates printed stuff shining through the paper to check for register
 accuracy.
 
 ## Getting Started
 
-Just call the script from the commandline.
+Just call the script from the command line with the pdf file name you want to process.
+The input file will not be overwritten.
 
 ### Prerequisites
 
